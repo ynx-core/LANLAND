@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LAN LAND - Loading...</title>
+    <style>
+        :root {
+            --bg-obsidian: #080808;
+            --crimson: #8b0000;
+            --crimson-glow: #ff1a1a;
+            --text-light: #e0e0e0;
+            --text-muted: #888888;
+        }
+
+        body {
+            background-color: var(--bg-obsidian);
+            color: var(--text-light);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            cursor: none;
+        }
+
+        .loader-card {
+            background: rgba(15, 15, 15, 0.9);
+            border: 1px solid rgba(139, 0, 0, 0.3);
+            box-shadow: 0 0 20px rgba(139, 0, 0, 0.2);
+            padding: 40px;
+            border-radius: 12px;
+            text-align: center;
+            max-width: 420px;
+            width: 90%;
+        }
+
+        h2 {
+            color: var(--crimson-glow);
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+
+        p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        .panic-note {
+            font-size: 0.8rem;
+            color: #ff6b6b;
+            margin-top: 20px;
+            font-style: italic;
+            opacity: 0.8;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(139, 0, 0, 0.2);
+            border-top: 3px solid var(--crimson-glow);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Custom Cursor */
+        .cursor {
+            position: fixed;
+            width: 12px;
+            height: 12px;
+            background-color: var(--crimson-glow);
+            border-radius: 50%;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 10px var(--crimson-glow), 0 0 20px var(--crimson);
+            transition: width 0.2s, height 0.2s;
+            z-index: 9999;
+        }
+
+        /* Responsive fallback for phones */
+        @media (max-width: 768px) {
+            body { cursor: auto; }
+            .cursor { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="cursor" id="cursor"></div>
+
+    <div class="loader-card">
+        <h2>LAN LAND</h2>
+        <p id="status-text">Initializing connection...</p>
+        <div class="spinner"></div>
+        <div class="panic-note">Do not panic if it looks stuck, it's just loading.</div>
+    </div>
+
+    <script>
+        // Custom Cursor movement
+        const cursor = document.getElementById('cursor');
+        window.addEventListener('mousemove', (e) => {
+            cursor.style.left = `${e.clientX}px`;
+            cursor.style.top = `${e.clientY}px`;
+        });
+
+        // Safe simulation loader without heavy external requests
+        window.addEventListener('DOMContentLoaded', () => {
+            const statusText = document.getElementById('status-text');
+            
+            setTimeout(() => {
+                statusText.innerText = "Securing session...";
+            }, 1000);
+
+            setTimeout(() => {
+                statusText.innerText = "Redirecting to portal...";
+            }, 2000);
+
+            setTimeout(() => {
+                window.location.href = "home.html";
+            }, 3000);
+        });
+    </script>
+</body>
+</html>
