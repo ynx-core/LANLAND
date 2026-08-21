@@ -2,29 +2,106 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Redirecting to Cloud...</title>
+    <title>LANLAND Chunked Video Player</title>
     <style>
-        body {
-            background-color: #030305;
-            color: #b8a9c9;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
+        body { font-family: sans-serif; text-align: center; padding-top: 40px; background: #121212; color: #fff; }
+        select { padding: 10px; font-size: 16px; border-radius: 5px; background: #222; color: #fff; border: 1px solid #444; margin-bottom: 20px; }
+        video { max-width: 800px; width: 100%; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.6); display: block; margin: 0 auto; }
+        #status { margin-top: 15px; font-size: 1.1em; color: #aaa; }
     </style>
-    <script>
-        // PASTE YOUR LATEST CLOUDFLARE TUNNEL URL HERE MANUALLY (or update it when it changes)
-        const tunnelURL = "https://atmosphere-complicated-trustee-holds.trycloudflare.com";
-
-        // Instantly redirect visitors to your local PC's live tunnel
-        window.location.replace(tunnelURL);
-    </script>
 </head>
 <body>
-    <p>Connecting to secure server...</p>
+
+    <h2>LANLAND Video Stream</h2>
+    
+    <div>
+        <label for="videoSelect">Choose a video: </label>
+        <select id="videoSelect" onchange="loadSelectedVideo()">
+            <option value="">Loading videos...</option>
+        </select>
+    </div>
+
+    <video id="videoPlayer" controls></video>
+    <p id="status">Reading video manifest...</p>
+
+    <script>
+        const MANIFEST_URL = "video_chunks/manifest.json";
+        let videoManifest = {};
+
+        async function loadManifest() {
+            const statusEl = document.getElementById('status');
+            const selectEl = document.getElementById('videoSelect');
+
+            try {
+                const response = await fetch(MANIFEST_URL);
+                if (!response.ok) throw new Error("Could not find manifest.json. Did you run the Python script and push the 'video_chunks' folder to GitHub?");
+                
+                videoManifest = await response.json();
+                selectEl.innerHTML = "";
+                const videoNames = Object.keys(videoManifest);
+
+                if (videoNames.length === 0) {
+                    statusEl.innerText = "No videos found in manifest.";
+                    selectEl.innerHTML = '<option value="">-- No videos found --</option>';
+                    return;
+                }
+
+                videoNames.forEach(name => {
+                    const totalParts = videoManifest[name];
+                    const option = document.createElement('option');
+                    option.value = name;
+                    option.text = `${name} (${totalParts} parts)`;
+                    selectEl.appendChild(option);
+                });
+
+                statusEl.innerText = "Select a video above to play.";
+                loadSelectedVideo();
+
+            } catch (err) {
+                statusEl.innerText = "Error: " + err.message;
+            }
+        }
+
+        async function loadSelectedVideo() {
+            const selectEl = document.getElementById('videoSelect');
+            const statusEl = document.getElementById('status');
+            const videoEl = document.getElementById('videoPlayer');
+
+            const baseName = selectEl.value;
+            if (!baseName) return;
+
+            const totalParts = videoManifest[baseName];
+            const chunks = [];
+            videoEl.src = ""; 
+
+            try {
+                for (let i = 0; i < totalParts; i++) {
+                    const partNumString = String(i).padStart(3, '0');
+                    const chunkUrl = `video_chunks/${baseName}.part${partNumString}`;
+
+                    statusEl.innerText = `Downloading ${baseName} - part ${i + 1} of ${totalParts}...`;
+
+                    const res = await fetch(chunkUrl);
+                    if (!res.ok) throw new Error(`Failed to fetch part ${i + 1} (${chunkUrl})`);
+
+                    const blob = await res.blob();
+                    chunks.push(blob);
+                }
+
+                statusEl.innerText = "Reassembling parts in browser memory...";
+                const completeBlob = new Blob(chunks, { type: 'video/x-matroska' });
+                videoEl.src = URL.createObjectURL(completeBlob);
+                
+                statusEl.innerText = `Ready to play: ${baseName}`;
+                videoEl.play();
+
+            } catch (err) {
+                statusEl.innerText = "Playback Error: " + err.message;
+            }
+        }
+
+        loadManifest();
+    </script>
+
 </body>
 </html>
